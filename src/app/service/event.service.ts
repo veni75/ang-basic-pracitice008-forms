@@ -1,13 +1,16 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { Event } from '../model/event';
+import { HttpClient } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root'
 })
 export class EventService {
 
-  private list: Event[] = [
+serverUrl: string = 'http://localhost:3000/events';
+
+  /* private list: Event[] = [
     {
       id: 1,
       name: 'Angular Connect',
@@ -36,23 +39,45 @@ export class EventService {
       time: '8am',
       location: { address: 'The UN Angular Center', city: 'New York', country: 'USA' }
     },
-  ];
+  ]; */
 
-  list$: BehaviorSubject<Event[]> = new BehaviorSubject<Event[]>(this.list);
+  list$: Observable<Event[]> = this.getAll();
 
-  constructor() { }
+  constructor(
+    private http: HttpClient,
+  ) { }
 
-  getAll(): void {
-    this.list$.next(this.list);
+  getAll(): Observable<Event[]> {
+    //this.list$.next(this.list);
+    return this.http.get<Event[]>(this.serverUrl);
   }
 
-  get(id: number): Observable<Event> {
+  get(id:number):Observable<Event>{    
+    id = typeof id === 'string' ? parseInt(id, 10) : id;
+    if(id>0){
+    return this.http.get<Event>(`${this.serverUrl}/${id}`);
+    }    
+    return of(new Event());
+  }
+
+  create(event:Event):Observable<Event>{      
+    return this.http.post<Event>(this.serverUrl,event);
+  } 
+
+  remove(event:Event):Observable<Event>{    
+    return this.http.delete<Event>(`${this.serverUrl}/${event.id}`);
+  }
+
+  update(event:Event):Observable<Event>{     
+    return this.http.patch<Event>(`${this.serverUrl}/${event.id}`,event);
+  }
+
+  /* get(id: number): Observable<Event> {
     id = typeof id === 'string' ? parseInt(id, 10) : id;
     const ev: Event | undefined = this.list.find( item => item.id === id );
     if (ev) {
       return of(ev);
     }
-
     return of(new Event());
   }
 
@@ -73,7 +98,7 @@ export class EventService {
     const index: number = this.list.findIndex( item => item.id === event.id );
     this.list.splice(index, 1);
     this.getAll();    
-  }
+  } */
 
 }
 
